@@ -176,7 +176,7 @@ plot_bar_graph(dll, sort_key, "After Sorting: First 10 Rows by " + sort_key)
 
 # --- Part 3: Searching (by Samin Ashraf)
 
-# Function to retrieve the value at the middle node of the sorted doubly linked-list.
+# Function to find the node at the middle of the sorted doubly linked-list or the provided range (start - end).
 def get_middle(start, end):
 
     # Edge case
@@ -185,9 +185,9 @@ def get_middle(start, end):
         return None
     
     # The slow-moving pointer moves one step at a time
-    slow = start    # Slow-moving pointer is assigned to the beginning node of the sorted doubly-linked list
+    slow = start    # Slow-moving pointer is assigned to the starting node of the range
     # The fast-moving pointer moves two steps at a time
-    fast = start    # Fast-moving pointer is assigned to the beginning node of the sorted doubly-linked list
+    fast = start    # Fast-moving pointer is assigned to the last node of the range
 
     while fast != end and fast.next != end:     # While loop to move the pointers
 
@@ -195,8 +195,8 @@ def get_middle(start, end):
         slow = slow.next
 
         # The loop will continue until:
-        #   1. The fast pointer reaches the end of the list
-        #   2. The fast pointer reaches the second-to-last node of the list
+        #   1. The fast pointer reaches the end of the range
+        #   2. The fast pointer reaches the second-to-last node of the range
 
         # If the fast pointer reaches the end, the loop terminates to prevent unnecessary iterations
         if fast is None:
@@ -209,8 +209,7 @@ def get_middle(start, end):
 # Function for performing binary search on a sorted doubly linked-list
 def binary_search_linked_list(start, end, key, target):
 
-    # Edge case
-    # Making sure the provided start node argument is not equal to the end node argument
+    # While loop runs till start is equal to end
     while start != end:
 
         # Middle node is provided by the above function get_middle(start, end)
@@ -229,12 +228,12 @@ def binary_search_linked_list(start, end, key, target):
 
             return mid
         
-        # If the target value is greater than the middle value, start pointer starts from the head of the sorted doubly linked-list
+        # If the target value is greater than the middle value, start pointer starts from the starting node of the range
         elif mid_value < target:
 
             start = mid.next
 
-        # Otherwise, the target value is searched in the left half of the sorted doubly linked-list
+        # Otherwise, the target value is searched in the left half of the range
         else:
 
             end = mid
