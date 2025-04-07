@@ -172,25 +172,26 @@ class Player:
                 if opponent_history.count(last_move) > 2:
                     return self.get_counter(last_move)
             return random.choice(['rock', 'paper', 'scissors'])
-        else:
-            # Level 3: More advanced prediction
+        elif self.ai_level == 3:
             if len(opponent_history) > 3:
-                # Look for patterns in the last 3 moves
-                pattern = tuple(opponent_history[-3:])
+                # Convert deque to indexed form using enumerate
+                pattern = tuple(opponent_history)[-3:]  # This part is safe since tuple() allows indexing
+                hist_tuple = tuple(opponent_history)    # Tuples support indexing and slicing
+
                 possible_next = []
-                for i in range(len(opponent_history)-3):
-                    if tuple(opponent_history[i:i+3]) == pattern and i+3 < len(opponent_history):
-                        possible_next.append(opponent_history[i+3])
-                
+                for i in range(len(hist_tuple) - 3):
+                    if tuple(hist_tuple[i:i + 3]) == pattern and i + 3 < len(hist_tuple):
+                        possible_next.append(hist_tuple[i + 3])
+
                 if possible_next:
                     predicted = random.choice(possible_next)
                     return self.get_counter(predicted)
-            
+
             # Fallback to level 2 behavior
             if len(opponent_history) > 0:
                 return self.get_counter(random.choice(opponent_history))
             return random.choice(['rock', 'paper', 'scissors'])
-    
+            
     def get_counter(self, move):
         if move == 'rock':
             return 'paper'
