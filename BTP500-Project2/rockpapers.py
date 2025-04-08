@@ -54,6 +54,7 @@ MENU = 0
 PLAYING = 1
 RESULT = 2
 TOURNAMENT = 3
+DOUBLE_CHOICE = 4
 game_state = MENU
 
 # Load images
@@ -211,7 +212,7 @@ class Game:
         self.player2_move = None
         self.result = None
         self.animation_frame = 0
-        self.max_animation_frames = 30
+        self.max_animation_frames = 60
         self.tournament = None
         self.game_history = []
         
@@ -364,7 +365,8 @@ def draw_menu():
     buttons = [
         ("Single Player", 200, GREEN),
         ("Tournament Mode", 280, BLUE),
-        ("Quit", 360, RED)
+        ("Double Choice Mode", 360, PURPLE),
+        ("Quit", 440, RED)
     ]
     
     for text, y, color in buttons:
@@ -375,12 +377,14 @@ def draw_menu():
                 return "single_player_menu"
             elif text == "Tournament Mode":
                 return "tournament_menu"
+            elif text == "Double Choice Mode":
+                return "double_choice"
             elif text == "Quit":
                 return "quit"
     
     # Instructions
     instructions = font_small.render("Select a game mode to begin", True, WHITE)
-    screen.blit(instructions, (WIDTH//2 - instructions.get_width()//2, 450))
+    screen.blit(instructions, (WIDTH//2 - instructions.get_width()//2, 550))
     
     return None
 
@@ -412,17 +416,55 @@ def draw_single_player_menu():
         ("Hard", WIDTH//2 + 70, 320, RED, 3)
     ]
     
-    for text, x, y, color, level in difficulties:
-        if draw_button(screen=screen, 
-                      x=x, 
-                      y=y, 
-                      width=100, 
-                      height=50, 
-                      text=text, 
-                      font=font_small if len(text) > 5 else font_medium,
-                      normal_color=color):
-            if click_sound: click_sound.play()
-            return ("set_difficulty", level)
+    # Easy button
+    if draw_button(screen=screen, 
+               x=WIDTH//2 - 150, 
+               y=320, 
+               width=85, 
+               height=50, 
+               text="Easy", 
+               font=font_medium,  
+               normal_color=GREEN):
+        if click_sound: click_sound.play()
+        return ("set_difficulty", 1)
+
+    # Medium Button (with larger width)
+    if draw_button(screen=screen, 
+               x=WIDTH//2 - 65,  # Adjusted position
+               y=320, 
+               width=125,  # Increased width
+               height=50, 
+               text="Medium", 
+               font=font_medium,  
+               normal_color=YELLOW):
+        if click_sound: click_sound.play()
+        return ("set_difficulty", 2)
+
+    # Hard Button
+    if draw_button(screen=screen, 
+               x=WIDTH//2 + 60, 
+               y=320, 
+               width=90, 
+               height=50, 
+               text="Hard", 
+               font=font_medium,  
+               normal_color=RED):
+        if click_sound: click_sound.play()
+        return ("set_difficulty", 3)
+
+    
+    # for text, x, y, color, level in difficulties:
+    #     if draw_button(screen=screen, 
+    #                   x=x, 
+    #                   y=y, 
+    #                   width=130, 
+    #                   height=50, 
+    #                   text=text, 
+    #                   #font=font_small if len(text) > 5 else font_medium,
+    #                   font=font_medium,
+    #                   normal_color=color):
+    #         if click_sound: click_sound.play()
+    #         return ("set_difficulty", level)
     
     # Back button
     if draw_button(screen=screen,
@@ -506,7 +548,106 @@ def draw_tournament_menu():
 
 
 
+def random_two_choices():
+    return random.sample(['rock', 'paper', 'scissors'], 2)
 
+def draw_double_choice_game():
+    global double_choice_stage, player_choices, ai_choices, player_final, ai_final
+
+    screen.fill((40, 40, 60))
+    
+    if double_choice_stage == 0:
+        prompt = font_medium.render("Choose TWO different moves:", True, WHITE)
+        screen.blit(prompt, (WIDTH//2 - prompt.get_width()//2, 50))
+
+        spacing = 150
+        start_x = WIDTH//2 - spacing * 1.5
+        moves = ['rock', 'paper', 'scissors']
+        images = [rock_img, paper_img, scissors_img]
+
+        for i, move in enumerate(moves):
+            img = images[i]
+            x = start_x + i * spacing
+            img_rect = img.get_rect(center=(x + 75, HEIGHT//2))
+            screen.blit(img, img_rect)
+
+            mouse_pos = pygame.mouse.get_pos()
+            if img_rect.collidepoint(mouse_pos):
+                pygame.draw.rect(screen, YELLOW, img_rect.inflate(10, 10), 3)
+                if pygame.mouse.get_pressed()[0]:
+                    if move not in player_choices:
+                        if click_sound: click_sound.play()
+                        player_choices.append(move)
+                        time.sleep(0.2)
+
+        if len(player_choices) == 2:
+            ai_choices = random_two_choices()
+            double_choice_stage = 1
+
+    elif double_choice_stage == 1:
+        title = font_medium.render("Now pick ONE from your two choices!", True, WHITE)
+        screen.blit(title, (WIDTH//2 - title.get_width()//2, 30))
+
+        spacing = 250
+        start_x = WIDTH//4
+        for i, move in enumerate(player_choices):
+            img = rock_img if move == 'rock' else paper_img if move == 'paper' else scissors_img
+            x = start_x + i * spacing
+            img_rect = img.get_rect(center=(x, HEIGHT//2))
+            screen.blit(img, img_rect)
+
+            mouse_pos = pygame.mouse.get_pos()
+            if img_rect.collidepoint(mouse_pos):
+                pygame.draw.rect(screen, GREEN, img_rect.inflate(10, 10), 3)
+                if pygame.mouse.get_pressed()[0]:
+                    if click_sound: click_sound.play()
+                    player_final = move
+                    ai_final = random.choice(ai_choices)
+                    double_choice_stage = 2
+                    time.sleep(0.2)
+
+        ai_label = font_small.render("Opponent Choices:", True, WHITE)
+        screen.blit(ai_label, (WIDTH//2 - ai_label.get_width()//2, HEIGHT//2 + 100))
+        for i, move in enumerate(ai_choices):
+            img = rock_img if move == 'rock' else paper_img if move == 'paper' else scissors_img
+            x = WIDTH//2 - 100 + i * 120
+            screen.blit(img, (x, HEIGHT//2 + 130))
+
+    elif double_choice_stage == 2:
+        p_img = rock_img if player_final == 'rock' else paper_img if player_final == 'paper' else scissors_img
+        a_img = rock_img if ai_final == 'rock' else paper_img if ai_final == 'paper' else scissors_img
+
+        screen.blit(p_img, (150, HEIGHT//2 - p_img.get_height()//2))
+        screen.blit(a_img, (WIDTH - 150 - a_img.get_width(), HEIGHT//2 - a_img.get_height()//2))
+
+        vs_text = font_large.render("VS", True, RED)
+        screen.blit(vs_text, (WIDTH//2 - vs_text.get_width()//2, HEIGHT//2 - 40))
+
+        if player_final == ai_final:
+            result = "It's a draw!"
+        elif (player_final == 'rock' and ai_final == 'scissors') or \
+             (player_final == 'paper' and ai_final == 'rock') or \
+             (player_final == 'scissors' and ai_final == 'paper'):
+            result = "You Win!"
+        else:
+            result = "Opponent Wins!"
+
+        result_text = font_medium.render(result, True, YELLOW)
+        screen.blit(result_text, (WIDTH//2 - result_text.get_width()//2, 80))
+
+        if draw_button(screen, WIDTH//2 - 150, HEIGHT - 100, 300, 50, "Play Again", font_medium):
+            player_choices.clear()
+            ai_choices.clear()
+            player_final = None
+            ai_final = None
+            double_choice_stage = 0
+            if click_sound: click_sound.play()
+
+        if draw_button(screen, WIDTH - 120, HEIGHT - 60, 100, 40, "Quit", font_small):
+            if click_sound: click_sound.play()
+            return "menu"
+
+    return None
 
 def draw_game():
     screen.fill((30, 30, 50))
@@ -703,6 +844,11 @@ tournament_names = ""
 selected_difficulty = 1
 input_active = False
 tournament_input_active = False
+double_choice_stage = 0
+player_choices = []
+ai_choices = []
+player_final = None
+ai_final = None
 
 # Main game loop
 running = True
@@ -752,6 +898,8 @@ while running:
         action = draw_single_player_menu()
     elif game_state == "tournament_menu":
         action = draw_tournament_menu()
+    elif game_state == DOUBLE_CHOICE:
+        action = draw_double_choice_game()
     elif game_state == PLAYING:
         action = draw_game()
     elif game_state == "tournament_winner":
@@ -766,6 +914,8 @@ while running:
         game_state = "single_player_menu"
     elif action == "tournament_menu":
         game_state = "tournament_menu"
+    elif action == "double_choice":
+        game_state = DOUBLE_CHOICE
     elif isinstance(action, tuple):
         if action[0] == "set_difficulty":
             selected_difficulty = action[1]
