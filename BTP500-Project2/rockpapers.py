@@ -61,9 +61,9 @@ game_state = MENU
 def load_image(name, scale=1):
     """Load images with proper error handling and naming"""
     image_files = {
-        'rock': 'rock.png',
-        'paper': 'paper.png',
-        'scissors': 'scissor.png'  # Match your filename exactly
+        'rock': '/Users/saminashraf/Documents/GitHub/BTP500/BTP500-Project2/rock.png',
+        'paper': '/Users/saminashraf/Documents/GitHub/BTP500/BTP500-Project2/paper.png',
+        'scissors': '/Users/saminashraf/Documents/GitHub/BTP500/BTP500-Project2/scissor.png'  # Match your filename exactly
     }
     
     try:
