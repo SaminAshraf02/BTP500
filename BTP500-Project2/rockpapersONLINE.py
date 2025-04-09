@@ -94,7 +94,6 @@ def load_image(name, scale=1):
 rock_img = load_image('rock', 0.5)
 paper_img = load_image('paper', 0.5)
 scissors_img = load_image('scissors', 0.5)
-
 # Load background images
 menu_bg = pygame.Surface((WIDTH, HEIGHT))
 menu_bg.fill((20, 20, 40))
@@ -213,17 +212,20 @@ class Game:
         self.player2_move = None
         self.result = None
         self.animation_frame = 0
-        self.max_animation_frames = 50
+        self.max_animation_frames = 60
         self.tournament = None
         self.game_history = []
+
+    def start_local_multiplayer(self):
+        self.player1 = Player(name="P1")
+        self.player2 = Player(name="P2")
+        self.tournament = None
         
     def start_single_player(self, player_name, ai_level):
         self.player1 = Player(player_name)
         self.player2 = Player("Computer", is_ai=True, ai_level=ai_level)
         self.tournament = None
         self.reset_round()
-        pygame.event.clear()
-        pygame.event.wait()
         
     def start_tournament(self, player_names):
         self.tournament = Tournament()
@@ -373,7 +375,7 @@ def draw_menu():
     ]
     
     for text, y, color in buttons:
-        if draw_button(screen, WIDTH//2 - 150, y, 350, 60, text, font_medium, normal_color=color):
+        if draw_button(screen, WIDTH//2 - 150, y, 300, 60, text, font_medium):
             if click_sound:
                 click_sound.play()
             if text == "Single Player":
@@ -401,10 +403,6 @@ def draw_single_player_menu():
     title = font_large.render("Single Player", True, WHITE)
     screen.blit(title, (WIDTH//2 - title.get_width()//2, 80))
     
-    # Name input label
-    name_label = font_medium.render("Name:", True, WHITE)
-    screen.blit(name_label, (WIDTH//2 - 150, 185))  # Position it above the input box
-
     # Name input
     pygame.draw.rect(screen, (50, 50, 70), (WIDTH//2 - 150, 220, 300, 40), border_radius=5)
     pygame.draw.rect(screen, (100, 100, 130) if input_active else (70, 70, 100), 
@@ -413,8 +411,15 @@ def draw_single_player_menu():
     screen.blit(name_text, (WIDTH//2 - 140, 225))
     
     # Difficulty level
-    diff_label = font_medium.render("Difficulty:", True, WHITE)
-    screen.blit(diff_label, (WIDTH//2 - 150, 290))
+    diff_label = font_medium.render("Select difficulty:", True, WHITE)
+    screen.blit(diff_label, (WIDTH//2 - 200, 280))
+    
+    # Difficulty buttons - FIXED HERE
+    difficulties = [
+        ("Easy", WIDTH//2 - 150, 320, GREEN, 1),
+        ("Medium", WIDTH//2 - 40, 320, YELLOW, 2),
+        ("Hard", WIDTH//2 + 70, 320, RED, 3)
+    ]
     
     # Easy button
     if draw_button(screen=screen, 
@@ -428,11 +433,11 @@ def draw_single_player_menu():
         if click_sound: click_sound.play()
         return ("set_difficulty", 1)
 
-    # Medium Button
+    # Medium Button (with larger width)
     if draw_button(screen=screen, 
-               x=WIDTH//2 - 65,
+               x=WIDTH//2 - 65,  # Adjusted position
                y=320, 
-               width=125,
+               width=125,  # Increased width
                height=50, 
                text="Medium", 
                font=font_medium,  
@@ -451,11 +456,36 @@ def draw_single_player_menu():
                normal_color=RED):
         if click_sound: click_sound.play()
         return ("set_difficulty", 3)
+
+    
+    # for text, x, y, color, level in difficulties:
+    #     if draw_button(screen=screen, 
+    #                   x=x, 
+    #                   y=y, 
+    #                   width=130, 
+    #                   height=50, 
+    #                   text=text, 
+    #                   #font=font_small if len(text) > 5 else font_medium,
+    #                   font=font_medium,
+    #                   normal_color=color):
+    #         if click_sound: click_sound.play()
+    #         return ("set_difficulty", level)
+    
+    # Back button
+    if draw_button(screen=screen,
+                  x=WIDTH//2 - 150,
+                  y=400,
+                  width=300,
+                  height=60,
+                  text="Back",
+                  font=font_medium):
+        if click_sound: click_sound.play()
+        return "menu"
     
     # Start button
     if draw_button(screen=screen,
                   x=WIDTH//2 - 150,
-                  y=400,
+                  y=480,
                   width=300,
                   height=60,
                   text="Start Game",
@@ -463,17 +493,6 @@ def draw_single_player_menu():
                   normal_color=GREEN):
         if click_sound: click_sound.play()
         return ("start_single", player_name if player_name else "Player", selected_difficulty)
-
-    # Back button
-    if draw_button(screen=screen,
-                  x=WIDTH//2 - 150,
-                  y=480,
-                  width=300,
-                  height=60,
-                  text="Back",
-                  font=font_medium):
-        if click_sound: click_sound.play()
-        return "menu"
     
     return None
 
@@ -653,7 +672,7 @@ def draw_game():
         screen.blit(remaining, (WIDTH//2 - remaining.get_width()//2, 30))
 
     # Game area
-    if game.player1_move and game.player2_move and game.is_animating():
+    if game.is_animating():
         game.update_animation()
         progress = game.animation_frame / game.max_animation_frames
 
@@ -695,7 +714,7 @@ def draw_game():
                 result_text = font_large.render(f"{game.player2.name} wins!", True, GREEN)
             else:
                 result_text = font_large.render("Draw!", True, YELLOW)
-            screen.blit(result_text, (WIDTH//2 - result_text.get_width()//2, HEIGHT//2 - 175))
+            screen.blit(result_text, (WIDTH//2 - result_text.get_width()//2, HEIGHT//2 - 100))
             
             # Next round button
             next_text = "Next Match" if game.tournament else "Next Round"
@@ -724,8 +743,8 @@ def draw_game():
                 screen.blit(select_text, (WIDTH//2 - select_text.get_width()//2, 100))
                 
                 # Calculate positions for images
-                spacing = 200
-                start_x = (WIDTH//2 - spacing * 1.5) + 40
+                spacing = 150
+                start_x = WIDTH//2 - spacing * 1.5
                 images = [
                     (rock_img, start_x, 'rock'),
                     (paper_img, start_x + spacing, 'paper'),
@@ -755,8 +774,8 @@ def draw_game():
                 screen.blit(select_text, (WIDTH//2 - select_text.get_width()//2, HEIGHT - 200))
                 
                 # Calculate positions for images
-                spacing = 200
-                start_x = (WIDTH//2 - spacing * 1.5) + 40
+                spacing = 150
+                start_x = WIDTH//2 - spacing * 1.5
                 images = [
                     (rock_img, start_x, 'rock'),
                     (paper_img, start_x + spacing, 'paper'),
