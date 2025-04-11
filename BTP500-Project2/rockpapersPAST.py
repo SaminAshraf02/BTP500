@@ -7,7 +7,7 @@
 ###                                                                                               ###
 ###                                GROUP MEMBERS                                                  ### 
 ###                                                                                               ###
-###          1.JUNGHO LEE                                    162019228                            ###
+###          1.JUNHO LEE                                      xxxxx                               ###
 ###          2.MICHAEL MELLES                                111838223                            ###
 ###          3.SAMIN ASHRAF                                  140362229                            ###
 ###                                                                                               ###
@@ -57,6 +57,7 @@ MENU = 0
 PLAYING = 1
 RESULT = 2
 TOURNAMENT = 3
+DOUBLE_CHOICE = 4
 KOREAN_RPS = 5
 CONGRATULATIONS = 6
 TIMED_GAME = 7
@@ -68,9 +69,9 @@ def load_image(name, scale=1):
 
     # Load images with proper error handling and naming
     image_files = {
-        'rock': 'rock.jpg',
-        'paper': 'paper.jpg',
-        'scissors': 'scissors.jpg'
+        'rock': '/Users/saminashraf/Documents/GitHub/BTP500/BTP500-Project2/rock.png',
+        'paper': '/Users/saminashraf/Documents/GitHub/BTP500/BTP500-Project2/paper.png',
+        'scissors': '/Users/saminashraf/Documents/GitHub/BTP500/BTP500-Project2/scissor.png'
     }
     
     # Error handling in case the images are not present or do not load
@@ -120,7 +121,7 @@ button_click.fill((50, 50, 80))
 try:
     win_sound = mixer.Sound('win.wav')
     lose_sound = mixer.Sound('lose.wav')
-    #draw_sound = mixer.Sound('draw.wav')
+    draw_sound = mixer.Sound('draw.wav')
     click_sound = mixer.Sound('click.wav')
 except:
     # Fallback if sounds aren't available
@@ -405,9 +406,9 @@ def draw_menu():
         ("Classic Challenge", 200, MINT),
         ("Tournament", 280, PERIWINKLE),
         ("Race Against Time", 360, PURPLE),
-        ("Korean RPS Mode", 520, ORANGE),
-        ("Double Choice Mode", 440, YELLOW),
-        ("Quit", 595, RED)
+        # ("Double Choice Mode", 360, PURPLE),
+        ("Korean RPS Mode", 440, ORANGE),
+        ("Quit", 520, RED)
     ]
     
     for text, y, color in buttons:
@@ -415,24 +416,21 @@ def draw_menu():
             if click_sound:
                 click_sound.play()
             if text == "Classic Challenge":
-                time.sleep(0.2)
                 return "single_player_menu"
             elif text == "Tournament":
-                time.sleep(0.2)
                 return "tournament_menu"
+            elif text == "Double Choice Mode":
+                return "double_choice"
             elif text == "Korean RPS Mode":
-                time.sleep(0.2)
                 return "korean_rps"
             elif text == "Quit":
-                time.sleep(0.2)
                 return "quit"
             elif text == "Race Against Time":
-                time.sleep(0.2)
                 return "timer_menu"
     
     # Instructions
     instructions = font_small.render("Select a game mode to begin", True, WHITE)
-    screen.blit(instructions, (((WIDTH//2 - instructions.get_width()//2) + 3), 675))
+    screen.blit(instructions, (((WIDTH//2 - instructions.get_width()//2) + 3), 610))
     
     return None
 
@@ -467,41 +465,41 @@ def draw_timed_menu():
     time_limit_label = font_medium.render("Time Limit: (Default: 10s)", True, WHITE)
     screen.blit(time_limit_label, (WIDTH//2 - 150, 280))
 
-    # 2s button
+    # 5s button
     if draw_button(screen=screen, 
                x=WIDTH//2 - 150, 
                y=315, 
                width=85, 
                height=50, 
-               text="2s", 
+               text="5s", 
                font=font_medium,  
                normal_color=RED):
         if click_sound: click_sound.play()
-        selected_time = 2
+        selected_time = 5
 
-    # 3s button
+    # 10s button
     if draw_button(screen=screen, 
                x=WIDTH//2 - 65, 
                y=315, 
                width=85, 
                height=50, 
-               text="3s", 
+               text="10s", 
                font=font_medium,  
                normal_color=LAVENDER):
         if click_sound: click_sound.play()
-        selected_time = 3
+        selected_time = 10
 
-    # 5s button
+    # 15s button
     if draw_button(screen=screen, 
                x=WIDTH//2 + 20, 
                y=315, 
                width=85, 
                height=50, 
-               text="5s", 
+               text="15s", 
                font=font_medium,  
                normal_color=PERIWINKLE):
         if click_sound: click_sound.play()
-        selected_time = 5
+        selected_time = 15
 
     # AI Difficulty
     diff_label = font_medium.render("Difficulty", True, WHITE)
@@ -799,7 +797,7 @@ def draw_tournament_menu():
     screen.blit(title, (WIDTH//2 - title.get_width()//2, 80))
     
     # Player names input
-    name_label = font_medium.render("Enter player names (comma separated):", True, WHITE)
+    name_label = font_medium.render("Player names (comma separated):", True, WHITE)
     screen.blit(name_label, (WIDTH//2 - 250, 180))
     
     # Input box
@@ -814,7 +812,7 @@ def draw_tournament_menu():
     screen.blit(example, (WIDTH//2 - example.get_width()//2, 270))
     
     # Back button
-    if draw_button(screen, WIDTH//2 - 150, 320, 300, 60, "Back", font_medium):
+    if draw_button(screen, WIDTH//2 - 150, 500, 300, 60, "Back", font_medium):
         if click_sound:
             click_sound.play()
         time.sleep(0.2)
@@ -823,7 +821,7 @@ def draw_tournament_menu():
     # Start Tournament button - using keyword arguments for clarity
     if draw_button(screen, 
                   x=WIDTH//2 - 150, 
-                  y=400, 
+                  y=425, 
                   width=300, 
                   height=60, 
                   text="Start Tournament", 
@@ -855,6 +853,190 @@ def draw_tournament_menu():
 
 def random_two_choices():
     return random.sample(['rock', 'paper', 'scissors'], 2)
+
+def best_ai_move(ai_choices, player_choices):
+    win_condition= {
+        'rock': 'scissors',
+        'paper': 'rock',
+        'scissors': 'paper'
+    }
+
+    best_move = ai_choices[0]
+    best_score = float('-inf')
+
+    for ai_move in ai_choices:
+        score = 0
+        for player_move in player_choices:
+            if ai_move == player_move:
+                score += 0  # Draw
+            elif win_condition[ai_move] == player_move:
+                score += 1  # Win
+            else:
+                score -= 1  # Loss
+        if score > best_score:
+            best_score = score
+            best_move = ai_move
+
+    return best_move
+
+def reset_double_choice():
+    global double_choice_stage, player_choices, ai_choices, player_final, ai_final, is_win
+    double_choice_stage = 0
+    player_choices = []
+    ai_choices = []
+    player_final = None
+    ai_final = None
+    is_win = False
+
+#double choice game
+def draw_double_choice_game():
+    global double_choice_stage, player_choices, ai_choices, player_final, ai_final, player_wins_double, computer_wins_double, is_win
+
+    if final_winner and not is_win:
+        if final_winner == 1:
+            player_wins_double += 1
+        elif final_winner == 2:
+            computer_wins_double += 1
+        is_win = True
+
+    screen.fill((40, 40, 60))
+    if double_choice_stage == 0:
+        # Difficulty selection
+        diff_label = font_medium.render("Select AI Difficulty:", True, WHITE)
+        screen.blit(diff_label, (WIDTH//2 - diff_label.get_width()//2, 20))
+        score_text = font_small.render(f"Player Wins: {player_wins_double}   Computer Wins: {computer_wins_double}", True, WHITE)
+        screen.blit(score_text, (WIDTH//2 - score_text.get_width()//2, 150))
+        difficulties = [
+            ("Easy", WIDTH//2 - 160, 100, GREEN, 1),
+            ("Medium", WIDTH//2 - 50, 100, YELLOW, 2),
+            ("Hard", WIDTH//2 + 60, 100, RED, 3)
+        ]
+
+        for text, x, y, color, level in difficulties:
+            if draw_button(screen=screen,
+                           x=x, y=y,
+                           width=80, height=40,
+                           text=text,
+                           font=font_small,
+                           normal_color=color):
+                global double_choice_difficulty
+                double_choice_difficulty = level
+                if click_sound: click_sound.play()
+    
+    if double_choice_stage == 0:
+        prompt = font_medium.render("Choose TWO different moves:", True, WHITE)
+        screen.blit(prompt, (WIDTH//2 - prompt.get_width()//2, 50))
+
+        spacing = 150
+        start_x = WIDTH//2 - spacing * 1.5
+        moves = ['rock', 'paper', 'scissors']
+        images = [rock_img, paper_img, scissors_img]
+
+        for i, move in enumerate(moves):
+            img = images[i]
+            x = start_x + i * spacing
+            img_rect = img.get_rect(center=(x + 75, HEIGHT//2))
+            screen.blit(img, img_rect)
+
+            mouse_pos = pygame.mouse.get_pos()
+            if img_rect.collidepoint(mouse_pos):
+                pygame.draw.rect(screen, YELLOW, img_rect.inflate(10, 10), 3)
+                if event.type == pygame.MOUSEBUTTONDOWN and img_rect.collidepoint(pygame.mouse.get_pos()):
+                    if move not in player_choices:
+                        if click_sound: click_sound.play()
+                        player_choices.append(move)
+                        time.sleep(0.2)
+
+        if len(player_choices) == 2:
+            ai_choices = random_two_choices()
+            double_choice_stage = 1
+
+    elif double_choice_stage == 1:
+        title = font_medium.render("Now pick ONE from your two choices!", True, WHITE)
+        screen.blit(title, (WIDTH//2 - title.get_width()//2, 30))
+
+        spacing = 250
+        start_x = WIDTH//4
+        for i, move in enumerate(player_choices):
+            img = rock_img if move == 'rock' else paper_img if move == 'paper' else scissors_img
+            x = start_x + i * spacing
+            img_rect = img.get_rect(center=(x, HEIGHT//2))
+            screen.blit(img, img_rect)
+
+            mouse_pos = pygame.mouse.get_pos()
+            if img_rect.collidepoint(mouse_pos):
+                pygame.draw.rect(screen, GREEN, img_rect.inflate(10, 10), 3)
+                if pygame.mouse.get_pressed()[0]:
+                    if click_sound: click_sound.play()
+                    player_final = move
+                    if double_choice_difficulty == 1:
+                        ai_final = random.choice(ai_choices)
+                    elif double_choice_difficulty == 2:
+                        ai_final = best_ai_move(ai_choices, player_choices) if random.random() > 0.3 else random.choice(ai_choices)
+                    else:
+                        ai_final = best_ai_move(ai_choices, player_choices)
+                    double_choice_stage = 2
+                    time.sleep(0.2)
+
+        ai_label = font_small.render("Opponent Choices:", True, WHITE)
+        screen.blit(ai_label, (WIDTH//2 - ai_label.get_width()//2, HEIGHT//2 + 100))
+        for i, move in enumerate(ai_choices):
+            img = rock_img if move == 'rock' else paper_img if move == 'paper' else scissors_img
+            x = WIDTH//2 - 100 + i * 120
+            screen.blit(img, (x, HEIGHT//2 + 130))
+
+    elif double_choice_stage == 2:
+        p_img = rock_img if player_final == 'rock' else paper_img if player_final == 'paper' else scissors_img
+        a_img = rock_img if ai_final == 'rock' else paper_img if ai_final == 'paper' else scissors_img
+
+        screen.blit(p_img, (150, HEIGHT//2 - p_img.get_height()//2))
+        screen.blit(a_img, (WIDTH - 150 - a_img.get_width(), HEIGHT//2 - a_img.get_height()//2))
+
+        vs_text = font_large.render("VS", True, RED)
+        screen.blit(vs_text, (WIDTH//2 - vs_text.get_width()//2, HEIGHT//2 - 40))
+
+        if player_final == ai_final:
+            result = "It's a draw!"
+        elif (player_final == 'rock' and ai_final == 'scissors') or \
+            (player_final == 'paper' and ai_final == 'rock') or \
+            (player_final == 'scissors' and ai_final == 'paper'):
+            result = "You Win!"
+            if not is_win:
+                player_wins_double += 1
+                is_win = True
+        else:
+            result = "Opponent Wins!"
+            if not is_win:
+                computer_wins_double += 1
+                is_win = True
+
+        result_text = font_medium.render(result, True, YELLOW)
+        screen.blit(result_text, (WIDTH//2 - result_text.get_width()//2, 80))
+
+        if draw_button(screen, WIDTH//2 - 150, HEIGHT - 100, 300, 50, "Play Again", font_medium):
+            reset_double_choice()
+            
+            if click_sound: click_sound.play()
+
+        if draw_button(screen, WIDTH - 120, HEIGHT - 60, 100, 40, "Quit", font_small):
+            if click_sound: click_sound.play()
+            time.sleep(0.2)
+            return "menu"
+        
+    if draw_button(screen,
+               x=20,
+               y=HEIGHT - 60,
+               width=160,
+               height=40,
+               text="Back to Menu",
+               font=font_small):
+        if click_sound:
+            click_sound.play()
+        # Reset state
+        reset_double_choice()
+        return "menu"
+
+    return None
 
 def reset_korean_rps():
     global stage, attacker, round_winner, final_winner
@@ -1090,7 +1272,6 @@ def draw_game():
             screen.blit(result_text, (WIDTH//2 - result_text.get_width()//2, HEIGHT//2 - 175))
             
             # Next round button
-            next_text = "Next Match" if game.tournament else "Next Round"
             if draw_button(screen=screen,
                 x=WIDTH//2 - 150,
                 y=HEIGHT - 100,
@@ -1108,8 +1289,8 @@ def draw_game():
                         winner = game.player1 if game.result == 'player1' else game.player2
                         if game.tournament.declare_winner(winner):
                             game.final_tournament_winner = winner
-                            return "congratulations"
-                        elif game.next_tournament_match():  # ✅ Only now do we call this
+                            return "Congratulations"
+                        elif game.next_tournament_match():  # Only now do we call this
                             time.sleep(0.2)
                             return None
                         else:
@@ -1275,9 +1456,14 @@ def rps_outcome(p1, p2):
 player_name = ""
 tournament_names = ""
 selected_difficulty = 1
+double_choice_difficulty = 1
 input_active = False
 tournament_input_active = False
-
+double_choice_stage = 0
+player_choices = []
+ai_choices = []
+player_wins_double = 0
+computer_wins_double = 0
 
 # Korean RPS globals
 player_final = None
@@ -1346,6 +1532,8 @@ while running:
         action = draw_single_player_menu()
     elif game_state == "tournament_menu":
         action = draw_tournament_menu()
+    elif game_state == DOUBLE_CHOICE:
+        action = draw_double_choice_game()
     elif game_state == KOREAN_RPS:
         action = draw_korean_rps()
     elif game_state == PLAYING:
@@ -1366,6 +1554,8 @@ while running:
         game_state = "single_player_menu"
     elif action == "tournament_menu":
         game_state = "tournament_menu"
+    elif action == "double_choice":
+        game_state = DOUBLE_CHOICE
     elif action == "korean_rps":
         reset_korean_rps()
         game_state = KOREAN_RPS
